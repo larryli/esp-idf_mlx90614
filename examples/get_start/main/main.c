@@ -22,32 +22,32 @@ void app_main(void)
         .flags.enable_internal_pullup = true,
     };
     i2c_master_bus_handle_t bus_handle;
-
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &bus_handle));
 
     for (int i = 0; i < 128; i++) {
         esp_err_t ret = i2c_master_probe(bus_handle, i, 50);
         if (ret == ESP_OK) {
-            ESP_LOGI(TAG, "found i2c device address: 0x%02X", i);
+            if (i == MLX90614_DEFAULT_ADDRESS) {
+                ESP_LOGI(TAG, "found mlx90614 address: 0x%02X", i);
+            } else {
+                ESP_LOGI(TAG, "found i2c device address: 0x%02X", i);
+            }
         }
     }
 
     mlx90614_config_t mlx90614_config = {
         .mlx90614_device.scl_speed_hz = MASTER_FREQUENCY,
-        .mlx90614_device.device_address = 0x5A,
+        .mlx90614_device.device_address = MLX90614_DEFAULT_ADDRESS,
     };
-
     mlx90614_handle_t mlx90614_handle;
     ESP_ERROR_CHECK(
         mlx90614_init(bus_handle, &mlx90614_config, &mlx90614_handle));
-
-    ESP_LOGI(TAG, "Init.");
 
     while (1) {
         float to, ta;
         mlx90614_get_to(mlx90614_handle, &to);
         mlx90614_get_ta(mlx90614_handle, &ta);
         ESP_LOGI(TAG, "To: %.1f°C, Ta: %.1f°C", to, ta);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

@@ -2,6 +2,7 @@
 #include "esp_err.h"
 #include <stdint.h>
 
+#define MLX90614_DEFAULT_ADDRESS (0x5A)
 #define MLX90614_EEPROM_SIZE (0x20)
 
 #ifdef __cplusplus
