@@ -13,13 +13,6 @@ typedef struct {
     i2c_device_config_t mlx90614_device; /*!< Configuration for mlx90614 device */
 } mlx90614_config_t;
 
-struct mlx90614_t {
-    i2c_master_dev_handle_t i2c_dev; /*!< I2C device handle */
-    uint8_t device_address;          /*!< PEC calculate */
-};
-
-typedef struct mlx90614_t mlx90614_t;
-
 typedef struct mlx90614_t *mlx90614_handle_t;
 
 /**

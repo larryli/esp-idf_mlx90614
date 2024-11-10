@@ -11,6 +11,11 @@
 
 static const char TAG[] = "mlx90614";
 
+struct mlx90614_t {
+    i2c_master_dev_handle_t i2c_dev; /*!< I2C device handle */
+    uint8_t device_address;          /*!< PEC calculate */
+};
+
 static uint8_t calculate_pec(uint8_t init_pec, uint8_t new_data)
 {
     uint8_t data;
@@ -33,9 +38,13 @@ esp_err_t mlx90614_init(i2c_master_bus_handle_t bus_handle,
                         const mlx90614_config_t *mlx90614_config,
                         mlx90614_handle_t *mlx90614_handle)
 {
+    ESP_RETURN_ON_FALSE(bus_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid i2c master bus");
+    ESP_RETURN_ON_FALSE(mlx90614_config, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 config");
     esp_err_t ret = ESP_OK;
-    mlx90614_handle_t out_handle;
-    out_handle = (mlx90614_handle_t)calloc(1, sizeof(mlx90614_handle_t));
+    mlx90614_handle_t out_handle =
+        (mlx90614_handle_t)calloc(1, sizeof(struct mlx90614_t));
     ESP_GOTO_ON_FALSE(out_handle, ESP_ERR_NO_MEM, err, TAG,
                       "no memory for i2c mlx90614 device");
 
@@ -65,8 +74,8 @@ err:
 esp_err_t mlx90614_write(mlx90614_handle_t mlx90614_handle, uint8_t command,
                          const uint16_t data)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint8_t buf[4];
 
     buf[0] = command;
@@ -83,8 +92,8 @@ esp_err_t mlx90614_write(mlx90614_handle_t mlx90614_handle, uint8_t command,
 esp_err_t mlx90614_read(mlx90614_handle_t mlx90614_handle, uint8_t command,
                         uint16_t *data)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint8_t buf[3];
 
     ESP_RETURN_ON_ERROR(i2c_master_transmit_receive(mlx90614_handle->i2c_dev,
@@ -108,8 +117,8 @@ esp_err_t mlx90614_read(mlx90614_handle_t mlx90614_handle, uint8_t command,
 
 esp_err_t mlx90614_command(mlx90614_handle_t mlx90614_handle, uint8_t command)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     if (command != 0x60 && command != 0x61 && command != 0xff) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -125,8 +134,8 @@ esp_err_t mlx90614_command(mlx90614_handle_t mlx90614_handle, uint8_t command)
 esp_err_t mlx90614_dump_eeprom(mlx90614_handle_t mlx90614_handle,
                                uint16_t *eeprom, size_t size)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t *p = eeprom;
 
     for (size_t i = 0; i < size; i++, p++) {
@@ -138,7 +147,7 @@ esp_err_t mlx90614_dump_eeprom(mlx90614_handle_t mlx90614_handle,
 
 esp_err_t mlx90614_get_ta(mlx90614_handle_t mlx90614_handle, float *ta)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
                         "no mem for buffer");
     uint16_t data = 0;
 
@@ -153,8 +162,8 @@ esp_err_t mlx90614_get_ta(mlx90614_handle_t mlx90614_handle, float *ta)
 
 esp_err_t mlx90614_get_to(mlx90614_handle_t mlx90614_handle, float *to)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
 
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x07, &data), TAG,
@@ -168,8 +177,8 @@ esp_err_t mlx90614_get_to(mlx90614_handle_t mlx90614_handle, float *to)
 
 esp_err_t mlx90614_get_to2(mlx90614_handle_t mlx90614_handle, float *to2)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
 
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x08, &data), TAG,
@@ -184,8 +193,8 @@ esp_err_t mlx90614_get_to2(mlx90614_handle_t mlx90614_handle, float *to2)
 esp_err_t mlx90614_get_ir_data1(mlx90614_handle_t mlx90614_handle,
                                 uint16_t *ir1)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x04, ir1), TAG,
                         "get ir data1 failed");
     return ESP_OK;
@@ -194,8 +203,8 @@ esp_err_t mlx90614_get_ir_data1(mlx90614_handle_t mlx90614_handle,
 esp_err_t mlx90614_get_ir_data2(mlx90614_handle_t mlx90614_handle,
                                 uint16_t *ir2)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x05, ir2), TAG,
                         "get ir data2 failed");
     return ESP_OK;
@@ -204,8 +213,8 @@ esp_err_t mlx90614_get_ir_data2(mlx90614_handle_t mlx90614_handle,
 esp_err_t mlx90614_get_emissivity(mlx90614_handle_t mlx90614_handle,
                                   float *emissivity)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
 
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x24, &data), TAG,
@@ -217,8 +226,8 @@ esp_err_t mlx90614_get_emissivity(mlx90614_handle_t mlx90614_handle,
 esp_err_t mlx90614_set_emissivity(mlx90614_handle_t mlx90614_handle,
                                   float value)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data;
     uint16_t curE;
     uint16_t newE = 0;
@@ -256,8 +265,8 @@ esp_err_t mlx90614_set_emissivity(mlx90614_handle_t mlx90614_handle,
 
 esp_err_t mlx90614_get_fir(mlx90614_handle_t mlx90614_handle, uint8_t *fir)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
 
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x25, &data), TAG,
@@ -270,8 +279,8 @@ esp_err_t mlx90614_get_fir(mlx90614_handle_t mlx90614_handle, uint8_t *fir)
 
 esp_err_t mlx90614_set_fir(mlx90614_handle_t mlx90614_handle, uint8_t value)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
     uint16_t val = value & 0x0007;
 
@@ -291,8 +300,8 @@ esp_err_t mlx90614_set_fir(mlx90614_handle_t mlx90614_handle, uint8_t value)
 
 esp_err_t mlx90614_get_iir(mlx90614_handle_t mlx90614_handle, uint8_t *iir)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
 
     ESP_RETURN_ON_ERROR(mlx90614_read(mlx90614_handle, 0x25, &data), TAG,
@@ -304,8 +313,8 @@ esp_err_t mlx90614_get_iir(mlx90614_handle_t mlx90614_handle, uint8_t *iir)
 
 esp_err_t mlx90614_set_iir(mlx90614_handle_t mlx90614_handle, uint8_t value)
 {
-    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_NO_MEM, TAG,
-                        "no mem for buffer");
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
     uint16_t data = 0;
     uint8_t val = value & 0x0007;
 
