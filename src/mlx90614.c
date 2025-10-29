@@ -71,6 +71,16 @@ err:
     return ret;
 }
 
+esp_err_t mlx90614_deinit(mlx90614_handle_t mlx90614_handle)
+{
+    ESP_RETURN_ON_FALSE(mlx90614_handle, ESP_ERR_INVALID_ARG, TAG,
+                        "invalid mlx90614 handle");
+    ESP_RETURN_ON_ERROR(i2c_master_bus_rm_device(mlx90614_handle->i2c_dev), TAG,
+                        "rm i2c device failed");
+    free(mlx90614_handle);
+    return ESP_OK;
+}
+
 esp_err_t mlx90614_write(mlx90614_handle_t mlx90614_handle, uint8_t command,
                          const uint16_t data)
 {
